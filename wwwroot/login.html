@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to your CourseReg account.">
+    <title>Login | CourseReg</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🎓</span>CourseReg
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                </ul>
+                <ul class="navbar-nav" id="navAuth">
+                    <li class="nav-item"><a class="nav-link active" href="/login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link btn-nav ms-2" href="/register.html">Register</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="auth-container">
+        <div class="auth-card fade-in">
+            <div class="auth-header">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👋</div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to access your dashboard</p>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <form id="loginForm" novalidate>
+                <div class="form-floating-custom">
+                    <label class="form-label-custom">Email Address</label>
+                    <input type="email" class="form-control" id="email" placeholder="you@example.com" required
+                        autocomplete="email">
+                </div>
+
+                <div class="form-floating-custom">
+                    <label class="form-label-custom">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password" required
+                        autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-submit" id="btnLogin">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Don't have an account? <a href="/register.html">Create one</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-custom" style="margin-top: 0;">
+        <div class="container text-center">
+            <p>© 2026 <a href="/">CourseReg</a> — Online Registration System. Terms and Conditions Apply UBUNTU IN
+                ACTION</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (Auth.isLoggedIn()) {
+            window.location.href = Auth.getDashboardUrl();
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            UI.clearAlert('alertContainer');
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                UI.showAlert('alertContainer', 'Email and password are required.', 'danger');
+                return;
+            }
+
+            UI.setLoading('btnLogin', true);
+
+            try {
+                const response = await Api.login(email, password);
+                UI.showAlert('alertContainer', response.message, 'success');
+
+                // Redirect based on role
+                setTimeout(() => {
+                    window.location.href = Auth.getDashboardUrl();
+                }, 800);
+            } catch (error) {
+                const msg = error.data?.message || 'Login failed. Please check your credentials.';
+                UI.showAlert('alertContainer', msg, 'danger');
+            } finally {
+                UI.setLoading('btnLogin', false);
+            }
+        });
+    </script>
+</body>
+
+</html>

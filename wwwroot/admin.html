@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | CourseReg</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🎓</span>CourseReg
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/admin.html">Admin</a></li>
+                </ul>
+                <ul class="navbar-nav" id="navAuth"></ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard -->
+    <div class="dashboard-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="dashboard-header fade-in">
+                <h2>🛡️ Admin Dashboard</h2>
+                <p>Manage users, courses, and registration settings</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid fade-in">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(99,102,241,0.1); color: var(--primary-light);">👥
+                    </div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: var(--success);">🎓</div>
+                    <div class="stat-value" id="totalStudents">0</div>
+                    <div class="stat-label">Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(6,182,212,0.1); color: var(--accent);">📖</div>
+                    <div class="stat-value" id="totalLecturers">0</div>
+                    <div class="stat-label">Lecturers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: var(--warning);">📚</div>
+                    <div class="stat-value" id="totalCourses">0</div>
+                    <div class="stat-label">Active Courses</div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="fade-in" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-primary-custom admin-tab active" data-tab="users"
+                        onclick="switchTab('users')" style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">👥
+                        Users</button>
+                    <button class="btn btn-outline-custom admin-tab" data-tab="courses" onclick="switchTab('courses')"
+                        style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">📚 Courses</button>
+                    <button class="btn btn-outline-custom admin-tab" data-tab="settings" onclick="switchTab('settings')"
+                        style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">⚙️ Settings</button>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-content">
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <h5>Registered Users</h5>
+                        <button class="btn btn-outline-custom" style="padding: 6px 16px; font-size: 0.85rem;"
+                            onclick="loadUsers()">🔄 Refresh</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6"
+                                        style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading
+                                        users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses Tab -->
+            <div id="tab-courses" class="tab-content" style="display: none;">
+                <!-- Add Course Form -->
+                <div class="table-container fade-in mb-4">
+                    <div class="table-header">
+                        <h5>➕ Add New Course</h5>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div id="courseAlertContainer"></div>
+                        <form id="addCourseForm" onsubmit="addCourse(event)">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label-custom">Course Name</label>
+                                        <input type="text" class="form-control" id="courseName"
+                                            placeholder="e.g. Data Structures" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label-custom">Course Code</label>
+                                        <input type="text" class="form-control" id="courseCode"
+                                            placeholder="e.g. CSC201" required maxlength="20">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-floating-custom">
+                                        <label class="form-label-custom">Max Capacity</label>
+                                        <input type="number" class="form-control" id="courseCapacity" value="100"
+                                            min="1" max="1000">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary-custom w-100" id="btnAddCourse"
+                                        style="padding: 0.85rem; font-size: 0.9rem;">Add</button>
+                                </div>
+                            </div>
+                            <div class="form-floating-custom mt-2">
+                                <label class="form-label-custom">Description</label>
+                                <input type="text" class="form-control" id="courseDesc"
+                                    placeholder="Brief course description" maxlength="500">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Courses Table -->
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <h5>Active Courses</h5>
+                        <button class="btn btn-outline-custom" style="padding: 6px 16px; font-size: 0.85rem;"
+                            onclick="loadCourses()">🔄 Refresh</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Course Name</th>
+                                    <th>Lecturer</th>
+                                    <th>Enrolled</th>
+                                    <th>Capacity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coursesTableBody">
+                                <tr>
+                                    <td colspan="6"
+                                        style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading
+                                        courses...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-content" style="display: none;">
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <h5>⚙️ Registration Settings</h5>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div id="settingsAlertContainer"></div>
+                        <form id="settingsForm" onsubmit="saveSettings(event)">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="glass-card" style="padding: 1.5rem;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <div>
+                                                <h6 style="font-weight: 700; margin: 0;">Registration Status</h6>
+                                                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">
+                                                    Allow or block new course registrations</p>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="regOpenToggle"
+                                                    checked
+                                                    style="width: 3rem; height: 1.5rem; cursor: pointer; background-color: var(--primary);">
+                                            </div>
+                                        </div>
+                                        <span id="regStatusLabel"
+                                            style="color: var(--success); font-size: 0.85rem; font-weight: 600;">🟢
+                                            Open</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="glass-card" style="padding: 1.5rem;">
+                                        <h6 style="font-weight: 700; margin-bottom: 0.5rem;">Max Courses Per Student
+                                        </h6>
+                                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.8rem;">
+                                            Maximum number of courses a student can register for</p>
+                                        <input type="number" class="form-control" id="maxCoursesInput" value="5" min="1"
+                                            max="10"
+                                            style="max-width: 100px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius-sm);">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary-custom" id="btnSaveSettings"
+                                    style="padding: 0.6rem 2.5rem;">
+                                    💾 Save Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="container text-center">
+            <p>© 2026 <a href="/">CourseReg</a> — Admin Panel</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        // Protect admin page
+        if (!Auth.requireAdmin()) {
+            // redirects
+        } else {
+            loadAll();
+        }
+
+        async function loadAll() {
+            await Promise.all([loadUsers(), loadCourses(), loadSettings()]);
+        }
+
+        // ─── Tab Switching ─────────────────────────────────────────
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.admin-tab').forEach(btn => {
+                btn.classList.remove('active');
+                btn.className = btn.className.replace('btn-primary-custom', 'btn-outline-custom');
+            });
+
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            const activeBtn = document.querySelector(`.admin-tab[data-tab="${tabName}"]`);
+            activeBtn.classList.add('active');
+            activeBtn.className = activeBtn.className.replace('btn-outline-custom', 'btn-primary-custom');
+        }
+
+        // ─── Users ─────────────────────────────────────────────────
+        async function loadUsers() {
+            try {
+                const response = await Api.getAllUsers();
+                const users = response.data || [];
+
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalStudents').textContent = users.filter(u => u.role === 'Student').length;
+                document.getElementById('totalLecturers').textContent = users.filter(u => u.role === 'Lecturer').length;
+
+                const tbody = document.getElementById('usersTableBody');
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No users registered yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td style="color: var(--text-muted);">#${user.userID}</td>
+                        <td style="color: var(--text-primary); font-weight: 500;">${escapeHtml(user.fullName)}</td>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td><span class="badge-role ${user.role === 'Admin' ? 'badge-admin' : user.role === 'Lecturer' ? 'badge-lecturer' : 'badge-student'}">${user.role}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">${new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                        <td>${user.role !== 'Admin' ? `<button class="btn-delete" onclick="deleteUser(${user.userID}, '${escapeHtml(user.fullName)}')">Delete</button>` : '<span style="color:var(--text-muted);font-size:0.8rem;">Protected</span>'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--danger);">Failed to load users.</td></tr>`;
+            }
+        }
+
+        async function deleteUser(userId, name) {
+            if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+            try {
+                await Api.deleteUser(userId);
+                UI.showToast(`User "${name}" deleted.`, 'success');
+                loadUsers();
+            } catch (error) {
+                UI.showToast(error.data?.message || 'Failed to delete user.', 'error');
+            }
+        }
+
+        // ─── Courses ───────────────────────────────────────────────
+        async function loadCourses() {
+            try {
+                const response = await Api.getAdminCourses();
+                const courses = response.data || [];
+                document.getElementById('totalCourses').textContent = courses.length;
+
+                const tbody = document.getElementById('coursesTableBody');
+                if (courses.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No courses found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = courses.map(c => `
+                    <tr>
+                        <td><span style="background: rgba(99,102,241,0.1); color: var(--primary-light); padding: 3px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">${escapeHtml(c.courseCode)}</span></td>
+                        <td style="color: var(--text-primary); font-weight: 500;">${escapeHtml(c.courseName)}</td>
+                        <td style="color: var(--text-muted);">${escapeHtml(c.lecturerName)}</td>
+                        <td>${c.enrolledCount}</td>
+                        <td>${c.maxCapacity}</td>
+                        <td><button class="btn-delete" onclick="deleteCourse(${c.courseID}, '${escapeHtml(c.courseName)}')">Remove</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('coursesTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--danger);">Failed to load courses.</td></tr>`;
+            }
+        }
+
+        async function addCourse(e) {
+            e.preventDefault();
+            UI.clearAlert('courseAlertContainer');
+            UI.setLoading('btnAddCourse', true);
+
+            try {
+                const courseData = {
+                    courseName: document.getElementById('courseName').value.trim(),
+                    courseCode: document.getElementById('courseCode').value.trim(),
+                    description: document.getElementById('courseDesc').value.trim(),
+                    maxCapacity: parseInt(document.getElementById('courseCapacity').value) || 100
+                };
+
+                await Api.addCourse(courseData);
+                UI.showToast(`Course "${courseData.courseName}" added!`, 'success');
+                document.getElementById('addCourseForm').reset();
+                document.getElementById('courseCapacity').value = '100';
+                loadCourses();
+            } catch (error) {
+                UI.showAlert('courseAlertContainer', error.data?.message || 'Failed to add course.', 'danger');
+            } finally {
+                UI.setLoading('btnAddCourse', false);
+            }
+        }
+
+        async function deleteCourse(courseId, name) {
+            if (!confirm(`Are you sure you want to remove "${name}"?`)) return;
+            try {
+                await Api.deleteCourse(courseId);
+                UI.showToast(`Course "${name}" removed.`, 'success');
+                loadCourses();
+            } catch (error) {
+                UI.showToast(error.data?.message || 'Failed to remove course.', 'error');
+            }
+        }
+
+        // ─── Settings ──────────────────────────────────────────────
+        async function loadSettings() {
+            try {
+                const response = await Api.getAdminSettings();
+                const settings = response.data || {};
+
+                const regOpen = (settings.RegistrationOpen || 'true') === 'true';
+                const maxCourses = parseInt(settings.MaxCoursesPerStudent || '5');
+
+                document.getElementById('regOpenToggle').checked = regOpen;
+                document.getElementById('maxCoursesInput').value = maxCourses;
+                updateRegLabel(regOpen);
+            } catch (error) {
+                UI.showAlert('settingsAlertContainer', 'Failed to load settings.', 'danger');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.getElementById('regOpenToggle');
+            if (toggle) {
+                toggle.addEventListener('change', () => updateRegLabel(toggle.checked));
+            }
+        });
+
+        function updateRegLabel(isOpen) {
+            const label = document.getElementById('regStatusLabel');
+            const toggle = document.getElementById('regOpenToggle');
+            if (isOpen) {
+                label.innerHTML = '🟢 Open';
+                label.style.color = 'var(--success)';
+                toggle.style.backgroundColor = 'var(--primary)';
+            } else {
+                label.innerHTML = '🔴 Closed';
+                label.style.color = 'var(--danger)';
+                toggle.style.backgroundColor = 'var(--danger)';
+            }
+        }
+
+        async function saveSettings(e) {
+            e.preventDefault();
+            UI.clearAlert('settingsAlertContainer');
+            UI.setLoading('btnSaveSettings', true);
+
+            try {
+                await Api.updateAdminSettings({
+                    registrationOpen: document.getElementById('regOpenToggle').checked,
+                    maxCoursesPerStudent: parseInt(document.getElementById('maxCoursesInput').value) || 5
+                });
+                UI.showToast('Settings saved successfully!', 'success');
+            } catch (error) {
+                UI.showAlert('settingsAlertContainer', error.data?.message || 'Failed to save settings.', 'danger');
+            } finally {
+                UI.setLoading('btnSaveSettings', false);
+            }
+        }
+    </script>
+</body>
+
+</html>

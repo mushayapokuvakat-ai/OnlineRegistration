@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecturer Dashboard | CourseReg</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🎓</span>CourseReg
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/lecturer.html">Lecturer</a></li>
+                </ul>
+                <ul class="navbar-nav" id="navAuth"></ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="dashboard-header fade-in">
+                <h2>📖 Lecturer Dashboard</h2>
+                <p>Welcome, <strong id="lecturerName">Lecturer</strong> — view your assigned courses and enrolled
+                    students</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid fade-in" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(99,102,241,0.1); color: var(--primary-light);">📚
+                    </div>
+                    <div class="stat-value" id="totalCourses">0</div>
+                    <div class="stat-label">My Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: var(--success);">👥</div>
+                    <div class="stat-value" id="totalStudents">0</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(6,182,212,0.1); color: var(--accent);">📊</div>
+                    <div class="stat-value" id="avgEnrollment">0</div>
+                    <div class="stat-label">Avg. per Course</div>
+                </div>
+            </div>
+
+            <!-- Courses List -->
+            <div id="coursesContainer" class="fade-in">
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading your courses...</div>
+            </div>
+
+            <!-- Students Modal (shown inline below courses) -->
+            <div class="table-container fade-in mb-4" id="studentsSection" style="display: none;">
+                <div class="table-header">
+                    <h5 id="studentsTitle">Enrolled Students</h5>
+                    <button class="btn btn-outline-custom" style="padding: 6px 16px; font-size: 0.85rem;"
+                        onclick="hideStudents()">✕ Close</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Enrolled On</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="container text-center">
+            <p>© 2026 <a href="/">CourseReg</a> — Lecturer Panel</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        // Protect lecturer page
+        if (!Auth.requireLecturer()) {
+            // redirects
+        } else {
+            const user = Auth.getUser();
+            if (user) {
+                document.getElementById('lecturerName').textContent = user.fullName;
+            }
+            loadLecturerDashboard();
+        }
+
+        async function loadLecturerDashboard() {
+            try {
+                const response = await Api.getLecturerCourses();
+                const courses = response.data || [];
+
+                // Update stats
+                const totalStudents = courses.reduce((sum, c) => sum + c.enrolledCount, 0);
+                document.getElementById('totalCourses').textContent = courses.length;
+                document.getElementById('totalStudents').textContent = totalStudents;
+                document.getElementById('avgEnrollment').textContent =
+                    courses.length > 0 ? Math.round(totalStudents / courses.length) : 0;
+
+                renderCourses(courses);
+            } catch (error) {
+                document.getElementById('coursesContainer').innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--danger);">
+                        Failed to load courses. ${error.data?.message || 'Please try again.'}
+                    </div>`;
+            }
+        }
+
+        function renderCourses(courses) {
+            const container = document.getElementById('coursesContainer');
+
+            if (courses.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    No courses assigned to you yet.</div>`;
+                return;
+            }
+
+            const courseIcons = {
+                'FRN101': '🇫🇷', 'MAT201': '📐', 'CSC301': '🖥️',
+                'SEN101': '⚙️', 'AIT201': '🤖', 'OOP301': '💻'
+            };
+
+            container.innerHTML = `<div class="row g-3 mb-4">${courses.map(c => {
+                const icon = courseIcons[c.courseCode] || '📖';
+                const capacityPct = Math.round((c.enrolledCount / c.maxCapacity) * 100);
+                return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-card feature-card" style="cursor: pointer; text-align: left; padding: 1.5rem;" onclick="viewStudents(${c.courseID}, '${escapeHtml(c.courseName)}')">
+                        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem;">
+                            <div class="feature-icon" style="width: 45px; height: 45px; font-size: 1.2rem; margin: 0;">${icon}</div>
+                            <div>
+                                <h6 style="font-weight: 700; margin: 0; font-size: 0.95rem;">${escapeHtml(c.courseName)}</h6>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">${escapeHtml(c.courseCode)}</span>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.8rem; line-height: 1.4;">${escapeHtml(c.description)}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                            <span style="color: var(--primary-light); font-size: 0.85rem; font-weight: 600;">👥 ${c.enrolledCount} students</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">${capacityPct}% full</span>
+                        </div>
+                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                            <div style="height: 100%; width: ${capacityPct}%; background: var(--gradient-1); border-radius: 2px;"></div>
+                        </div>
+                        <div style="margin-top: 0.8rem; text-align: center;">
+                            <span style="color: var(--accent); font-size: 0.8rem; font-weight: 500;">Click to view students →</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}</div>`;
+        }
+
+        async function viewStudents(courseId, courseName) {
+            const section = document.getElementById('studentsSection');
+            const tbody = document.getElementById('studentsBody');
+            const title = document.getElementById('studentsTitle');
+
+            title.textContent = `📋 Students in: ${courseName}`;
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading...</td></tr>';
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                const response = await Api.getCourseStudents(courseId);
+                const students = response.data?.students || [];
+
+                if (students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">No students enrolled yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = students.map((s, i) => `
+                    <tr>
+                        <td style="color: var(--text-muted);">${i + 1}</td>
+                        <td style="color: var(--text-primary); font-weight: 500;">${escapeHtml(s.studentName)}</td>
+                        <td>${escapeHtml(s.studentEmail)}</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">${new Date(s.enrolledAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to load students.</td></tr>`;
+            }
+        }
+
+        function hideStudents() {
+            document.getElementById('studentsSection').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
