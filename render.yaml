@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: student-registration-app
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SHIELD_KEY
+        value: "Fortress-Render-Shield-123!"
+      - key: DATABASE_URL
+        value: "sqlite:///online_reg.db"
+      - key: ENABLE_IP_WHITELIST
+        value: "false" # Disabled for Render testing, can be enabled later
