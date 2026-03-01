@@ -335,14 +335,16 @@ def seed_db():
                 c = Course(course_name=name, course_code=code, description=desc, lecturer_id=lec_ids.get(lemail), lecturer_name=name)
                 db.session.add(c)
         
-        # Settings
-        if not Setting.query.get('RegistrationOpen'):
-            db.session.add(Setting(key='RegistrationOpen', value='true'))
-            db.session.add(Setting(key='MaxCoursesPerStudent', value='5'))
-
         db.session.commit()
 
-if __name__ == '__main__':
+# --- Initialize Database on Statup ---
+with app.app_context():
     seed_db()
-    # Run on port 9091
+
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
+
+if __name__ == '__main__':
+    # Run on port 9091 for local testing
     app.run(host='0.0.0.0', port=9091, debug=True)
