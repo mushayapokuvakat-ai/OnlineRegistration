@@ -39,7 +39,7 @@ def role_required(role):
         @wraps(fn)
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
-            claims = get_jwt_identity()
+            claims = get_jwt()
             if claims.get('role') != role:
                 return jsonify({"success": False, "message": "Access denied"}), 403
             return fn(*args, **kwargs)
@@ -109,7 +109,7 @@ def login():
     data = request.get_json()
     user = User.query.filter_by(email=data['email']).first()
     if user and bcrypt.check_password_hash(user.password_hash, data['password']):
-        access_token = create_access_token(identity={'id': user.user_id, 'role': user.role})
+        access_token = create_access_token(identity=str(user.user_id), additional_claims={'role': user.role})
         return jsonify({
             "success": True,
             "data": {
@@ -130,14 +130,14 @@ def get_courses():
 @app.route('/api/courses/my-courses', methods=['GET'])
 @role_required('Student')
 def get_my_courses():
-    student_id = get_jwt_identity()['id']
+    student_id = get_jwt_identity()
     enrollments = Enrollment.query.filter_by(student_id=student_id).all()
     return jsonify({"success": True, "data": [e.to_dict() for e in enrollments], "message": f"You are enrolled in {len(enrollments)} course(s)."})
 
 @app.route('/api/courses/enroll', methods=['POST'])
 @role_required('Student')
 def enroll():
-    student_id = get_jwt_identity()['id']
+    student_id = get_jwt_identity()
     data = request.get_json()
     course_ids = data.get('courseIds', [])
     
@@ -179,7 +179,7 @@ def enroll():
 @app.route('/api/courses/enroll/<int:course_id>', methods=['DELETE'])
 @role_required('Student')
 def drop_course(course_id):
-    student_id = get_jwt_identity()['id']
+    student_id = get_jwt_identity()
     enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
     if enrollment:
         course = Course.query.get(course_id)
@@ -199,14 +199,14 @@ def get_settings_public():
 @app.route('/api/lecturer/courses', methods=['GET'])
 @role_required('Lecturer')
 def get_lecturer_courses():
-    lecturer_id = get_jwt_identity()['id']
+    lecturer_id = get_jwt_identity()
     courses = Course.query.filter_by(lecturer_id=lecturer_id).all()
     return jsonify({"success": True, "data": [c.to_dict() for c in courses]})
 
 @app.route('/api/lecturer/courses/<int:id>/students', methods=['GET'])
 @role_required('Lecturer')
 def get_course_students(id):
-    lecturer_id = get_jwt_identity()['id']
+    lecturer_id = int(get_jwt_identity())
     course = Course.query.get(id)
     if not course or course.lecturer_id != lecturer_id:
         return jsonify({"success": False, "message": "Access denied"}), 403
