@@ -56,13 +56,16 @@ def security_shield():
         return "Automated access is blocked. Please use a standard web browser.", 403
 
     # 2. Shield Key Check (Fortress Defense)
-    # Allows browser users to see the site, but protects the API from unauthorized scripts.
+    # Allows browser users to use the site, but protects against external scraping tools.
     shield_key = os.getenv('SHIELD_KEY')
     request_key = request.headers.get('X-Shield-Key')
     is_api_request = request.path.startswith('/api')
-    is_from_tunnel = 'X-Forwarded-For' in request.headers or 'X-Original-Host' in request.headers
+    referring_site = request.headers.get('Referer', '')
     
-    if is_api_request and is_from_tunnel and shield_key and request_key != shield_key:
+    # If the request is coming from our own site, we allow it.
+    is_internal = request.host in referring_site
+    
+    if is_api_request and not is_internal and shield_key and request_key != shield_key:
         return "Security Alert: Connection blocked by Fortress Firewall. Secret Handshake missing.", 403
 
     # 3. IP Whitelist
