@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venc/
+.venv/
+env/
+.env
+
+# Database
+instance/
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# .NET remains (if any)
+bin/
+obj/
+publish/
+*.user
+*.suo
+node_modules/
