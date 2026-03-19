@@ -49,7 +49,6 @@ const Auth = {
         window.location.href = '/login.html';
     },
 
-    /** Redirects based on auth state. */
     requireAuth() {
         if (!this.isLoggedIn()) {
             window.location.href = '/login.html';
@@ -82,7 +81,6 @@ const Auth = {
         return true;
     },
 
-    /** Get the appropriate dashboard URL for the current user. */
     getDashboardUrl() {
         if (this.isAdmin()) return '/admin.html';
         if (this.isLecturer()) return '/lecturer.html';
@@ -92,9 +90,6 @@ const Auth = {
 
 // ─── API Client ────────────────────────────────────────────────
 const Api = {
-    /**
-     * Generic fetch wrapper with auth header injection.
-     */
     async request(url, options = {}) {
         const headers = {
             'Content-Type': 'application/json',
@@ -125,11 +120,24 @@ const Api = {
         }
     },
 
+    // ─── College & Programme Endpoints ─────────────────────────
+    async getColleges() {
+        return this.request('/colleges', { method: 'GET' });
+    },
+
+    async getProgrammes(collegeId) {
+        return this.request(`/colleges/${collegeId}/programmes`, { method: 'GET' });
+    },
+
+    async getCoursesByProgramme(programmeId, level) {
+        return this.request(`/programmes/${programmeId}/courses?level=${level}`, { method: 'GET' });
+    },
+
     // ─── Auth Endpoints ────────────────────────────────────────
-    async register(fullName, email, password, role = 'Student') {
+    async register(fullName, email, password, role = 'Student', collegeId = null, programmeId = null, level = null) {
         return this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ fullName, email, password, role })
+            body: JSON.stringify({ fullName, email, password, role, collegeId, programmeId, level })
         });
     },
 
@@ -144,7 +152,12 @@ const Api = {
             Auth.setUser({
                 fullName: response.data.fullName,
                 email: response.data.email,
-                role: response.data.role
+                role: response.data.role,
+                collegeID: response.data.collegeID,
+                collegeName: response.data.collegeName,
+                programmeID: response.data.programmeID,
+                programmeName: response.data.programmeName,
+                level: response.data.level
             });
         }
 
@@ -152,8 +165,13 @@ const Api = {
     },
 
     // ─── Course Endpoints ──────────────────────────────────────
-    async getCourses() {
-        return this.request('/courses', { method: 'GET' });
+    async getCourses(programmeId, level) {
+        let url = '/courses';
+        const params = [];
+        if (programmeId) params.push(`programmeId=${programmeId}`);
+        if (level) params.push(`level=${level}`);
+        if (params.length) url += '?' + params.join('&');
+        return this.request(url, { method: 'GET' });
     },
 
     async getMyCourses() {
@@ -222,7 +240,6 @@ const Api = {
 
 // ─── UI Helpers ────────────────────────────────────────────────
 const UI = {
-    /** Show an alert message inside a container element. */
     showAlert(containerId, message, type = 'danger') {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -235,19 +252,16 @@ const UI = {
             </div>
         `;
 
-        // Auto-dismiss success after 5 seconds
         if (type === 'success') {
             setTimeout(() => { container.innerHTML = ''; }, 5000);
         }
     },
 
-    /** Clear alert messages. */
     clearAlert(containerId) {
         const container = document.getElementById(containerId);
         if (container) container.innerHTML = '';
     },
 
-    /** Show toast notification. */
     showToast(message, type = 'success') {
         let container = document.querySelector('.toast-container');
         if (!container) {
@@ -268,7 +282,6 @@ const UI = {
         }, 4000);
     },
 
-    /** Set button loading state. */
     setLoading(buttonId, loading) {
         const btn = document.getElementById(buttonId);
         if (!btn) return;
@@ -283,7 +296,6 @@ const UI = {
         }
     },
 
-    /** Update navbar based on auth state. */
     updateNavbar() {
         const navAuth = document.getElementById('navAuth');
         if (!navAuth) return;
@@ -294,14 +306,14 @@ const UI = {
             let roleLinks = '';
 
             if (Auth.isAdmin()) {
-                roleLinks = '<li class="nav-item"><a class="nav-link" href="/admin.html">🛡️ Admin</a></li>';
+                roleLinks = '<li class="nav-item"><a class="nav-link" href="/admin.html">Admin</a></li>';
             } else if (Auth.isLecturer()) {
-                roleLinks = '<li class="nav-item"><a class="nav-link" href="/lecturer.html">📖 Lecturer</a></li>';
+                roleLinks = '<li class="nav-item"><a class="nav-link" href="/lecturer.html">Lecturer</a></li>';
             }
 
             navAuth.innerHTML = `
                 ${roleLinks}
-                <li class="nav-item"><a class="nav-link" href="${dashUrl}">👤 ${user?.fullName || 'Profile'}</a></li>
+                <li class="nav-item"><a class="nav-link" href="${dashUrl}">${user?.fullName || 'Profile'}</a></li>
                 <li class="nav-item"><a class="nav-link btn-nav ms-2" href="#" onclick="Auth.logout(); return false;">Logout</a></li>
             `;
         } else {

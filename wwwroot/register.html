@@ -36,7 +36,7 @@
 
     <!-- Registration Form -->
     <div class="auth-container">
-        <div class="auth-card fade-in">
+        <div class="auth-card fade-in" style="max-width: 560px;">
             <div class="auth-header">
                 <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎓</div>
                 <h2>Create Your Account</h2>
@@ -78,6 +78,43 @@
                     </select>
                 </div>
 
+                <!-- Student-only academic fields -->
+                <div id="studentFields" class="student-fields-animate">
+                    <hr style="border-color: var(--glass-border); margin: 1.2rem 0;">
+                    <p style="color: var(--primary-light); font-weight: 600; font-size: 0.9rem; margin-bottom: 1rem;">
+                        📋 Academic Information
+                    </p>
+
+                    <div class="form-floating-custom">
+                        <label class="form-label-custom">College</label>
+                        <select class="form-select" id="collegeSelect">
+                            <option value="">-- Select your College --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-floating-custom">
+                        <label class="form-label-custom">Programme</label>
+                        <select class="form-select" id="programmeSelect" disabled>
+                            <option value="">-- Select College first --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-floating-custom">
+                        <label class="form-label-custom">Level (Year.Semester)</label>
+                        <select class="form-select" id="levelSelect" disabled>
+                            <option value="">-- Select Programme first --</option>
+                            <option value="1.1">1.1 - Year 1, Semester 1</option>
+                            <option value="1.2">1.2 - Year 1, Semester 2</option>
+                            <option value="2.1">2.1 - Year 2, Semester 1</option>
+                            <option value="2.2">2.2 - Year 2, Semester 2</option>
+                            <option value="3.1">3.1 - Year 3, Semester 1</option>
+                            <option value="3.2">3.2 - Year 3, Semester 2</option>
+                            <option value="4.1">4.1 - Year 4, Semester 1</option>
+                            <option value="4.2">4.2 - Year 4, Semester 2</option>
+                        </select>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-submit" id="btnRegister">
                     Create Account
                 </button>
@@ -92,14 +129,81 @@
     <!-- Footer -->
     <footer class="footer-custom" style="margin-top: 0;">
         <div class="container text-center">
-            <p>© 2026 <a href="/">CourseReg</a> — Online Registration System. Terms and Conditions Apply UBUNTU IN
-                ACTION</p>
+            <p>&copy; 2026 <a href="/">CourseReg</a> &mdash; Online Registration System. UBUNTU IN ACTION</p>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/api.js"></script>
     <script>
+        // ─── Load Colleges on page load ────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await Api.getColleges();
+                const select = document.getElementById('collegeSelect');
+                if (res.success && res.data) {
+                    res.data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.collegeID;
+                        opt.textContent = `${c.icon} ${c.name}`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load colleges', e);
+            }
+        });
+
+        // ─── Role toggle ───────────────────────────────────────────
+        document.getElementById('role').addEventListener('change', (e) => {
+            const studentFields = document.getElementById('studentFields');
+            if (e.target.value === 'Student') {
+                studentFields.style.display = 'block';
+                studentFields.style.opacity = '1';
+            } else {
+                studentFields.style.display = 'none';
+                studentFields.style.opacity = '0';
+            }
+        });
+
+        // ─── College → Programme cascade ───────────────────────────
+        document.getElementById('collegeSelect').addEventListener('change', async (e) => {
+            const progSelect = document.getElementById('programmeSelect');
+            const levelSelect = document.getElementById('levelSelect');
+            progSelect.innerHTML = '<option value="">Loading...</option>';
+            progSelect.disabled = true;
+            levelSelect.disabled = true;
+
+            const collegeId = e.target.value;
+            if (!collegeId) {
+                progSelect.innerHTML = '<option value="">-- Select College first --</option>';
+                return;
+            }
+
+            try {
+                const res = await Api.getProgrammes(collegeId);
+                progSelect.innerHTML = '<option value="">-- Select your Programme --</option>';
+                if (res.success && res.data) {
+                    res.data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.programmeID;
+                        opt.textContent = `${p.name} (${p.code})`;
+                        progSelect.appendChild(opt);
+                    });
+                }
+                progSelect.disabled = false;
+            } catch (err) {
+                progSelect.innerHTML = '<option value="">Failed to load programmes</option>';
+            }
+        });
+
+        // ─── Programme → Level enable ──────────────────────────────
+        document.getElementById('programmeSelect').addEventListener('change', (e) => {
+            const levelSelect = document.getElementById('levelSelect');
+            levelSelect.disabled = !e.target.value;
+        });
+
+        // ─── Form Submit ───────────────────────────────────────────
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             UI.clearAlert('alertContainer');
@@ -110,39 +214,42 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             const role = document.getElementById('role').value;
 
-            // Client-side validation
             if (!fullName || !email || !password) {
                 UI.showAlert('alertContainer', 'All fields are required.', 'danger');
                 return;
             }
-
             if (password.length < 6) {
                 UI.showAlert('alertContainer', 'Password must be at least 6 characters.', 'danger');
                 return;
             }
-
             if (password !== confirmPassword) {
                 UI.showAlert('alertContainer', 'Passwords do not match.', 'danger');
                 return;
             }
-
-            // Email format check
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 UI.showAlert('alertContainer', 'Please enter a valid email address.', 'danger');
                 return;
             }
 
+            let collegeId = null, programmeId = null, level = null;
+            if (role === 'Student') {
+                collegeId = document.getElementById('collegeSelect').value || null;
+                programmeId = document.getElementById('programmeSelect').value || null;
+                level = document.getElementById('levelSelect').value || null;
+
+                if (!collegeId || !programmeId || !level) {
+                    UI.showAlert('alertContainer', 'Please select your College, Programme, and Level.', 'danger');
+                    return;
+                }
+            }
+
             UI.setLoading('btnRegister', true);
 
             try {
-                const response = await Api.register(fullName, email, password, role);
+                const response = await Api.register(fullName, email, password, role, collegeId, programmeId, level);
                 UI.showAlert('alertContainer', response.message, 'success');
-
-                // Redirect to success page after brief delay
-                setTimeout(() => {
-                    window.location.href = '/success.html';
-                }, 1500);
+                setTimeout(() => { window.location.href = '/success.html'; }, 1500);
             } catch (error) {
                 const msg = error.data?.message || 'Registration failed. Please try again.';
                 UI.showAlert('alertContainer', msg, 'danger');
@@ -151,6 +258,13 @@
             }
         });
     </script>
+
+    <style>
+        .student-fields-animate {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+    </style>
 </body>
 
 </html>
