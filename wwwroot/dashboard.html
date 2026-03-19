@@ -27,24 +27,26 @@
         <!-- Profile & Stats -->
         <div class="row mb-5">
             <div class="col-md-4 mb-4 mb-md-0">
-                <div class="glass-card h-100 d-flex flex-column justify-content-center align-items-center text-center p-4">
-                    <!-- Kept for script compatibility but hidden -->
-                    <div style="display:none;">
-                        <h4 id="studentName"></h4>
-                        <p id="studentEmail"></p>
-                        <span id="infoCollege"></span>
-                        <span id="infoProgramme"></span>
-                        <span id="infoLevel"></span>
+                <div class="glass-card h-100 d-flex flex-column align-items-center text-center p-4">
+                    <div class="logo-container mb-3">
+                        <img src="images/logo.png" alt="University Logo" style="width: 120px; height: auto; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
                     </div>
-
-                    <!-- New Logo & Note UI -->
-                    <div class="logo-container mb-4">
-                        <img src="images/logo.png" alt="University Logo" class="dashboard-logo fade-in">
+                    <h4 id="studentName">Student Name</h4>
+                    <p class="text-secondary mb-2" id="studentEmail">student@email.com</p>
+                    <span class="badge-role badge-student mb-2">Student Account</span>
+                    <!-- Academic Info -->
+                    <div id="academicInfo" class="mt-3 w-100" style="text-align:left;">
+                        <div class="academic-info-card">
+                            <div class="info-row"><span class="info-label">🏛️ College</span><span class="info-value" id="infoCollege">—</span></div>
+                            <div class="info-row"><span class="info-label">📋 Programme</span><span class="info-value" id="infoProgramme">—</span></div>
+                            <div class="info-row"><span class="info-label">📊 Level</span><span class="info-value" id="infoLevel">—</span></div>
+                        </div>
                     </div>
-                    
-                    <div class="academic-note-box fade-in">
-                        <p class="academic-note-text">
-                            College of engineering and applied sciences africa university an online course registration system that can be incorporated in univertsities
+                    <!-- About Section -->
+                    <div class="mt-4 p-3 w-100" style="background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); text-align: left;">
+                        <h6 style="font-size: 0.8rem; font-weight: 700; color: var(--primary-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">Academic Record</h6>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            Welcome to the 2026 Academic Year. CourseReg provides a seamless registration experience for students at Africa University. Ensure all your courses are registered before the deadline.
                         </p>
                     </div>
                 </div>
