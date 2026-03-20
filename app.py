@@ -11,18 +11,26 @@ from flask_limiter.util import get_remote_address
 from datetime import timedelta, datetime
 from functools import wraps
 from dotenv import load_dotenv
+from flask_migrate import Migrate
 from models import db, User, Course, Enrollment, Setting, College, Programme
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='wwwroot', static_url_path='')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///online_reg.db')
+
+# DATABASE_URL handling for Render/Heroku (standardizing 'postgresql://')
+db_url = os.getenv('DATABASE_URL', 'sqlite:///online_reg.db')
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-dev-secret')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 db.init_app(app)
+migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 CORS(app)

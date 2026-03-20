@@ -1,3 +1,9 @@
+databases:
+  - name: onlinereg-postgres
+    databaseName: online_reg_db
+    user: reg_admin
+    plan: free
+
 services:
   - type: web
     name: student-registration-app
@@ -14,6 +20,8 @@ services:
       - key: SHIELD_KEY
         value: "Fortress-Render-Shield-123!"
       - key: DATABASE_URL
-        value: "sqlite:///online_reg.db"
+        fromDatabase:
+          name: onlinereg-postgres
+          property: connectionString
       - key: ENABLE_IP_WHITELIST
-        value: "false" # Disabled for Render testing, can be enabled later
+        value: "false"
